@@ -13,5 +13,8 @@ except FileExistsError:
     print ("This application is already running.\n")
     input ("Press [ENTER] to exit.")
     exit()
-except: input("Problem creating lock file.")
+except PermissionError: input("Need permission to create lock file.")
+except Exception as e: input(e)
+
+
 
