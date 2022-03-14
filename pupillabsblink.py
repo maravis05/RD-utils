@@ -4,6 +4,7 @@ import zmq
 import time
 blinks = []
 onset = False
+pupil_return_time = 1000
 
 ctx = zmq.Context()
 # The REQ talks to Pupil remote and receives the session unique IPC SUB PORT
@@ -32,6 +33,7 @@ import msgpack
 
 while True:
     topic, payload = subscriber.recv_multipart()
+    #measure time in milliseconds
     now = time.localtime()
     message = msgpack.loads(payload)
     #print(f"{topic}: {message}")
@@ -41,6 +43,9 @@ while True:
         onset = True
         blink_onset_time = now
     
+    #add elif to capture how long the eye is closed (is it still closed over onset?)
+
+
     #when pupil is re-acquired after being lost, we grab pupil return time
     elif (float(message['confidence']) > .3 and onset == True):
         onset = False
@@ -48,9 +53,11 @@ while True:
 
         #if the amount of time that the pupil was lost is greater than 1 second, we discard and start over.
         #if the pupil was lost for 1 second or less, we record the time of onset and the confidence, and print to screen.
-        if (pupil_return_time.tm_sec()-blink_onset_time.tm_sec() <= 1):
+        
+        if ((pupil_return_time.tm_sec-blink_onset_time.tm_sec <= 1) and (pupil_return_time.tm_sec-blink_onset_time.tm_sec > 0) ):
+            print(pupil_return_time.tm_sec-blink_onset_time.tm_sec)
             time_string = str(blink_onset_time.tm_hour) + ':' + str(blink_onset_time.tm_min) + ':' + str(blink_onset_time.tm_sec)
-            confidence = message['confidence']
+            confidence = str(round(message['confidence'],2))
             blinks.append(confidence+" "+time_string)
             print(confidence+" "+time_string)
 
